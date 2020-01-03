@@ -1,2 +1,5 @@
 # Telegraph
-A wireless telegraph system for the NodeMCU ESP8266 chip
+
+A wireless [morse] telegraph system for the NodeMCU ESP8266 chip
+
+`- --- / -... . / -.-. --- -. - .. -. ..- . -.. / .-.-.- .-.-.- .-.-.-`
