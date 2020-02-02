@@ -16,18 +16,22 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/** Configuration preferences are defined in the preferences.ino file and are
- *  automatically included by the Arduino compiler.
+/**
+ * The preferences file is automatically included here by the Arduino IDE.
  */
 
-// Pin definitions
-#define BUTTON D3
-#define SPEAKER D5
-
 void setup(){
-    
+    pinMode(BUTTON, INPUT_PULLUP);
+    pinMode(SPEAKER, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop(){
-    
+    int state = digitalRead(BUTTON);
+    if(state == LOW){ // The button is pressed; state inverted due to pullup pin
+        tone(SPEAKER, PITCH);
+    }else{
+        noTone(SPEAKER);
+    }
+    digitalWrite(LED_BUILTIN, state);
 }

@@ -17,10 +17,13 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef TELEGRAPH_PREF
-#define TELEGRAPH_PREF
-
 #include <ThingerESP8266.h>
+
+// General preferences
+#define PITCH 600
+
+#define BUTTON D3
+#define SPEAKER D5
 
 // NodeMCU preferences
 #define WIFI_SSID "WiFi SSID"
@@ -30,5 +33,3 @@
 #define USERNAME "Username"
 #define DEVICE_ID "Device ID"
 #define DEVICE_CREDENTIAL "Device Credential"
-
-#endif
