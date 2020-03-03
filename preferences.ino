@@ -22,8 +22,11 @@
 // General preferences
 #define PITCH 600
 
-#define BUTTON D3
+#define BUTTON D1
 #define SPEAKER D5
+#define LED_RED D6
+#define LED_GRN D7
+#define LED_BLU D2
 
 // NodeMCU preferences
 #define WIFI_SSID "WiFi SSID"

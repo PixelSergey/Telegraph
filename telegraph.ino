@@ -23,15 +23,23 @@
 void setup(){
     pinMode(BUTTON, INPUT_PULLUP);
     pinMode(SPEAKER, OUTPUT);
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(LED_RED, OUTPUT);
+    pinMode(LED_GRN, OUTPUT);
+    pinMode(LED_BLU, OUTPUT);
 }
 
 void loop(){
     int state = digitalRead(BUTTON);
-    if(state == LOW){ // The button is pressed; state inverted due to pullup pin
+    if(state == LOW){  // The button is pressed; state inverted due to pullup pin
         tone(SPEAKER, PITCH);
+        // Due to the RGB led being common anode, 0 turns it fully on and 1023 turns it fully off
+        analogWrite(LED_GRN, 0);
+        analogWrite(LED_RED, 1023);
+        analogWrite(LED_BLU, 1023);
     }else{
         noTone(SPEAKER);
+        analogWrite(LED_GRN, 1023);
+        analogWrite(LED_RED, 1023);
+        analogWrite(LED_BLU, 1023);
     }
-    digitalWrite(LED_BUILTIN, state);
 }
