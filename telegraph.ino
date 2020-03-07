@@ -22,11 +22,14 @@
 
 int start_time;
 int current_time;
+int recvstate;
 bool stream;
+bool recv;
+char recvname[9];
 
 ThingerESP8266 thing(USERNAME, DEVICE_ID, DEVICE_CREDENTIAL);
 
-void setup(){
+void setup(){    
     pinMode(BUTTON, INPUT_PULLUP);
     pinMode(SPEAKER, OUTPUT);
     pinMode(LED_RED, OUTPUT);
@@ -36,36 +39,73 @@ void setup(){
     start_time = millis();
     current_time = millis();
     stream = false;
+    recv = false;
+
+    // The most cursed and hacky line of code you will ever see
+    // Converts NodeMCU1 <-> NodeMCU0 to find out the recipient's name
+    sprintf(recvname, "NodeMCU%d", !((int)DEVICE_ID[7]-48));
 
     thing.add_wifi(WIFI_SSID, WIFI_PASSWORD);
 
     thing["button"] >> [](pson& out){
-    out = digitalRead(BUTTON);
-  };
+        out = digitalRead(BUTTON);
+    };
+    thing["listener"] << [](pson& in){
+        recvstate = in;
+    };
+    thing["torecv"] = [](){
+        recv = !recv;
+    };
 }
 
 void loop(){
     thing.handle();
+    if(recv){
+        analogWrite(LED_RED, 0);
+        thing.stream();
+        if(!recvstate){ // The sender's button is pressed
+            tone(SPEAKER, PITCH);
+            analogWrite(LED_GRN, 0);
+            
+        }else{
+            noTone(SPEAKER);
+            analogWrite(LED_GRN, 1023);
+        }
+        return;
+    }
+
+    analogWrite(LED_RED, 1023);
     int button = digitalRead(BUTTON);
     if(button == LOW){  // The button is pressed; state inverted due to pullup pin
         tone(SPEAKER, PITCH);
         // Due to the RGB led being common anode, 0 turns it fully on and 1023 turns it fully off
         analogWrite(LED_GRN, 0);
-        analogWrite(LED_RED, 1023);
-
-        current_time = millis();
-        if(current_time - start_time >= 2500){
-            stream = !stream;
+        
+        if(!stream){
+            current_time = millis();
+            if(current_time - start_time >= 2500){
+                stream = true;
+                thing.call_device(recvname, "torecv");
+                start_time = millis();
+            }
+        }else{
             start_time = millis();
         }
     }else{
         noTone(SPEAKER);
         analogWrite(LED_GRN, 1023);
-        analogWrite(LED_RED, 1023);
 
-        start_time = millis();
+        if(stream){
+            current_time = millis();
+            if(current_time - start_time >= 5000){
+                stream = false;
+                thing.call_device(recvname, "torecv");
+                start_time = millis();
+            }
+        }else{
+            start_time = millis();
+        }
     }
-
     if(stream){
         thing.stream(thing["button"]);
         analogWrite(LED_BLU, 0);
