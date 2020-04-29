@@ -16,25 +16,33 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * The preferences file is automatically included here by the Arduino IDE.
- */
+
+// The preferences file is automatically included here by the Arduino IDE.
 
 ThingerESP8266 thing(USERNAME, DEVICE_ID, DEVICE_CREDENTIAL);
 char recvname[9]; // The name of the receiver
+int start_time;
+int end_time;
+int stop_time;
+int pulse_time;
+int last;
+int duration;
 
-void send_state(int state){
-    pson data;
-    data["state"] = state;
-    thing.call_device(recvname, "state", data);
+void ICACHE_RAM_ATTR timer(){
+    int button = digitalRead(BUTTON);
+    int delayt = millis() + 30;
+    while(millis() < delayt);
+    if(button == LOW){
+        start_time = millis();
+    }else{
+        end_time = millis();
+        if(last != HIGH) pulse_time = end_time - start_time;
+    }
+    last = button;
 }
 
-// These two functions call the send_state function separately due to the fact that a function that is
-// attached as a callback cannot take any parametres and cannot return anything.
-void send_on(){send_state(1);}
-void send_off(){send_state(0);}
-
-void setup(){    
+void setup(){
+    Serial.begin(9600);
     pinMode(BUTTON, INPUT_PULLUP);
     pinMode(SPEAKER, OUTPUT);
     // Due to the RGB led being common anode, 0 turns an LED fully on and 1023 turns it fully off
@@ -42,8 +50,14 @@ void setup(){
     pinMode(LED_GRN, OUTPUT);
     pinMode(LED_BLU, OUTPUT);
 
-    attachInterrupt(BUTTON, send_on, FALLING);
-    attachInterrupt(BUTTON, send_off, RISING);
+    analogWrite(LED_RED, 1023);
+    analogWrite(LED_GRN, 1023);
+    analogWrite(LED_BLU, 1023);
+
+    pulse_time = 0;
+    duration = 0;
+    
+    attachInterrupt(digitalPinToInterrupt(BUTTON), timer, CHANGE);
 
     // The most cursed and hacky line of code you will ever see
     // Converts NodeMCU1 <-> NodeMCU0 to find out the recipient's name
@@ -51,18 +65,30 @@ void setup(){
 
     thing.add_wifi(WIFI_SSID, WIFI_PASSWORD);
     
-    thing["state"] << [](pson& in){
-        int command = (int) in["state"];
-        if(command == 1){
-            analogWrite(LED_GRN, 0);
-            tone(SPEAKER, PITCH);
-        }else{
-            analogWrite(LED_GRN, 0);
-            noTone(SPEAKER);
-        }
+    thing["play"] << [](pson& in){
+        duration = (int) in["duration"];
+        Serial.println(duration);
     };
 }
 
 void loop(){
     thing.handle();
+    if(pulse_time != 0){
+        pson data;
+        data["duration"] = pulse_time;
+        Serial.println(pulse_time);
+        pulse_time = 0;
+        thing.call_device(recvname, "play", data);
+    }
+
+    if(duration != 0){
+        stop_time = millis() + duration;
+        duration = 0;
+        tone(SPEAKER, PITCH);
+        analogWrite(LED_GRN, 0);
+    }
+    if(millis() > stop_time){
+        noTone(SPEAKER);
+        analogWrite(LED_GRN, 1023);
+    }
 }
