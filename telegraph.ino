@@ -16,33 +16,27 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <vector>
 // The preferences file is automatically included here by the Arduino IDE.
 
 ThingerESP8266 thing(USERNAME, DEVICE_ID, DEVICE_CREDENTIAL);
-char recvname[9]; // The name of the receiver
-int start_time;
-int end_time;
-int stop_time;
-int pulse_time;
-int silence_time;
-int last;
-int duration;
-int command;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 0);
 
-std::vector<int> play;
-std::vector<int> silence;
+char recvname[9]; // The name of the receiver
+unsigned long init_time;
+int current_millis;
+
+int last;
+int out_command;
+
+unsigned long in_init_time;
+std::vector<int> in_millis;
+std::vector<int> in_command;
 
 void ICACHE_RAM_ATTR timer(){
     int button = digitalRead(BUTTON);
-    int delayt = millis() + 30;
-    while(millis() < delayt);
-    if(button == LOW){
-        start_time = millis();
-        if(last != LOW) silence_time = start_time - end_time;
-    }else{
-        end_time = millis();
-        if(last != HIGH) pulse_time = end_time - start_time;
+    if(last != button){
+        out_command = button;
     }
     last = button;
 }
@@ -60,73 +54,71 @@ void setup(){
     analogWrite(LED_GRN, 1023);
     analogWrite(LED_BLU, 1023);
 
-    pulse_time = 0;
-    silence_time = 0;
-    duration = 0;
-    command = 0;
+    last = 0;
+    out_command = -1;
     
     attachInterrupt(digitalPinToInterrupt(BUTTON), timer, CHANGE);
-
+    
     // The most cursed and hacky line of code you will ever see
     // Converts NodeMCU1 <-> NodeMCU0 to find out the recipient's name
     sprintf(recvname, "NodeMCU%d", !((int)DEVICE_ID[7]-48));
-
+    
     thing.add_wifi(WIFI_SSID, WIFI_PASSWORD);
     
+    thing.handle();
+    timeClient.begin();
+    timeClient.update();
+    current_millis = millis();
+    init_time = (unsigned long)(timeClient.getEpochTime() - current_millis/1000);
+    Serial.println();
+    Serial.printf("Init. time: %d\n", init_time);
+    Serial.printf("Millis. time: %d\n", current_millis);
+    timeClient.end();
+    
     thing["command"] << [](pson& in){
-        int play_t = (int) in["play"];
-        int silence_t = (int) in["silence"];
-        if(play_t != 0){
-            play.push_back(play_t);
-        }
-        if(silence_t != 0){
-            silence.push_back(silence_t);
-        }
+        in_init_time = (unsigned long) in["inittime"];
+        Serial.printf("Init Time: %d\n", in_init_time);
+        in_command.push_back((int) in["command"]);
+        Serial.printf("Command: %d\n", in_command.front());
+        in_millis.push_back((int) in["millis"]);
+        Serial.printf("Millis: %d\n", in_millis.front());
     };
 }
 
 void loop(){
     thing.handle();
-    if(pulse_time != 0){
+    current_millis = millis();
+    
+    if(out_command != -1){
         pson data;
-        data["play"] = pulse_time;
-        Serial.println(pulse_time);
-        pulse_time = 0;
+        data["inittime"] = init_time;
+        data["command"] = out_command;
+        data["millis"] = current_millis;
+        Serial.println(out_command);
+        out_command = -1;
         thing.call_device(recvname, "command", data);
     }
-    if(silence_time != 0){
-        pson data;
-        data["silence"] = silence_time;
-        Serial.println(silence_time);
-        silence_time = 0;
-        thing.call_device(recvname, "command", data);
-    }
-
-    if(duration == 0 && (!play.empty() || !silence.empty())){
-        if(play.size() >= silence.size()){
-            duration = play.front();
-            play.erase(play.begin());
-            command = 1;
-        }else{
-            duration = silence.front();
-            silence.erase(silence.begin());
-            command = 0;
+    if(!in_command.empty() && !in_millis.empty()){
+        // Check the whole number of seconds first
+        unsigned long start_sec = in_init_time + (unsigned long)(in_millis.front()/1000);
+        unsigned long now_sec = init_time + (unsigned long)(current_millis/1000);
+        if(start_sec >= now_sec){
+            // And then check the millisecond part
+            int start_ms = in_millis.front() - 1000*(int)(in_millis.front()/1000);
+            int now_ms = current_millis - 1000*(int)(current_millis/1000);
+            if(start_ms >= now_ms){
+                if(in_command.front() == LOW){
+                    Serial.println("Activated");
+                    analogWrite(LED_GRN, 0);
+                    tone(SPEAKER, PITCH);
+                }else{
+                    Serial.println("De-activated");
+                    analogWrite(LED_GRN, 1023);
+                    noTone(SPEAKER);
+                }
+                in_command.erase(in_command.begin());
+                in_millis.erase(in_millis.begin());
+            }
         }
-    }
-    if(duration != 0){
-        stop_time = millis() + duration;
-        duration = 0;
-        if(command == 1){
-            tone(SPEAKER, PITCH);
-            analogWrite(LED_GRN, 0);
-        }else{
-            noTone(SPEAKER);
-            analogWrite(LED_GRN, 1023);
-        }
-    }
-    if(millis() > stop_time){
-        noTone(SPEAKER);
-        analogWrite(LED_GRN, 1023);
-        duration = 0;
     }
 }
