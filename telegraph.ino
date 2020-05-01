@@ -23,17 +23,14 @@ ThingerESP8266 thing(USERNAME, DEVICE_ID, DEVICE_CREDENTIAL);
 char recvname[9]; // The name of the receiver
 long dt; // The time difference between both NodeMCUs
 
-// Output variables
-int out_command;
-int last_button;
-int current_button;
-unsigned long last_millis;
-
-// Input variables
+// Input lists
 std::vector<unsigned long> in_millis;
 std::vector<int> in_command;
 
 void output(){
+    static int last_button = -1;
+    static int current_button = -1;
+    static unsigned long last_millis = millis();
     int button = digitalRead(BUTTON);
     
     if(button != last_button){
@@ -93,11 +90,6 @@ void setup(){
     analogWrite(LED_RED, 1023);
     analogWrite(LED_GRN, 1023);
     analogWrite(LED_BLU, 1023);
-    
-    last_button = -1;
-    out_command = -1;
-    current_button = -1;
-    last_millis = millis();
     
     // The most cursed and hacky line of code you will ever see
     // Converts NodeMCU1 <-> NodeMCU0 to find out the recipient's name
