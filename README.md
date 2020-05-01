@@ -1,6 +1,6 @@
 # Telegraph
 
-[![Listen to this README here](../meta/listen.png "Listen to this README here")](../README.wav)
+[![Listen to this README here](meta/listen.png "Listen to this README here")](README.wav)
 
 A wireless [morse] telegraph system for the NodeMCU ESP8266 chip
 
@@ -33,7 +33,7 @@ standard breadboard size. See [this article](https://frightanic.com/iot/comparis
 The circuit contains a morse key (which can be any button), a speaker, and an RGB LED light.
 These are hooked up using resistors and capacitors. A breadboard also helps a lot. The circuit is as follows:
 
-![Breadboard diagram](../meta/Telegraph_bb.png) ![Circuit diagram](../meta/Telegraph_schem.png)
+![Breadboard diagram](meta/Telegraph_bb.png) ![Circuit diagram](meta/Telegraph_schem.png)
 
 ## Credits
 
