@@ -25,22 +25,60 @@ long dt; // The time difference between both NodeMCUs
 
 // Output variables
 int out_command;
-int last;
+int last_button;
+int current_button;
+unsigned long last_millis;
 
 // Input variables
 std::vector<unsigned long> in_millis;
 std::vector<int> in_command;
 
-/**
- * Interrupt function. Immediately interrupts the main program and
- * jumps here when a button state change is detected.
- * The ICACHE_RAM_ATTR flag is needed to put the function in RAM,
- * as that is required to avoid a crash.
- */
-void ICACHE_RAM_ATTR on_interrupt(){
+void output(){
     int button = digitalRead(BUTTON);
-    if(last != button) out_command = button;
-    last = button;
+    
+    if(button != last_button){
+        last_millis = millis();
+    }
+    
+    if(millis() - last_millis > 7){
+        if(button != current_button){
+            current_button = button;
+            if(button == LOW){
+                analogWrite(LED_GRN, 0);
+                tone(SPEAKER, PITCH);
+            }else{
+                analogWrite(LED_GRN, 1023);
+                noTone(SPEAKER);
+            }
+            
+            pson payload;
+            payload["command"] = button;
+            payload["millis"] = millis();
+            Serial.println(button);
+            thing.call_device(recvname, "command", payload);
+        }
+    }
+    
+    last_button = button;
+}
+
+void input(){
+    if(!in_command.empty() && !in_millis.empty()){
+        if(millis() > in_millis.front() + dt + 1000){
+            // The button emits a LOW voltage when pressed due to the INPUT_PULLUP mode
+            if(in_command.front() == LOW){
+                analogWrite(LED_GRN, 0);
+                tone(SPEAKER, PITCH);
+                Serial.println("Activated");
+            }else{
+                analogWrite(LED_GRN, 1023);
+                noTone(SPEAKER);
+                Serial.println("De-activated");
+            }
+            in_command.erase(in_command.begin());
+            in_millis.erase(in_millis.begin());
+        }
+    }
 }
 
 void setup(){
@@ -56,11 +94,10 @@ void setup(){
     analogWrite(LED_GRN, 1023);
     analogWrite(LED_BLU, 1023);
     
-    last = 0;
+    last_button = -1;
     out_command = -1;
-
-    // Attach the interrupt function to any change in state of the button
-    attachInterrupt(digitalPinToInterrupt(BUTTON), on_interrupt, CHANGE);
+    current_button = -1;
+    last_millis = millis();
     
     // The most cursed and hacky line of code you will ever see
     // Converts NodeMCU1 <-> NodeMCU0 to find out the recipient's name
@@ -96,37 +133,6 @@ void setup(){
 
 void loop(){
     thing.handle();
-    
-    if(out_command != -1){
-        if(out_command == LOW){
-            analogWrite(LED_GRN, 0);
-            tone(SPEAKER, PITCH);
-        }else{
-            analogWrite(LED_GRN, 1023);
-            noTone(SPEAKER);
-        }
-        
-        pson payload;
-        payload["command"] = out_command;
-        payload["millis"] = millis();
-        Serial.println(out_command);
-        out_command = -1;
-        thing.call_device(recvname, "command", payload);
-    }
-    if(!in_command.empty() && !in_millis.empty()){
-        if(millis() > in_millis.front() + dt + 1000){
-            // The button emits a LOW voltage when pressed due to the INPUT_PULLUP mode
-            if(in_command.front() == LOW){
-                analogWrite(LED_GRN, 0);
-                tone(SPEAKER, PITCH);
-                Serial.println("Activated");
-            }else{
-                analogWrite(LED_GRN, 1023);
-                noTone(SPEAKER);
-                Serial.println("De-activated");
-            }
-            in_command.erase(in_command.begin());
-            in_millis.erase(in_millis.begin());
-        }
-    }
+    output();
+    input();
 }
