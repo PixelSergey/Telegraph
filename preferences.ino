@@ -18,8 +18,6 @@
  */
 
 #include <ThingerESP8266.h>
-#include <NTPClient.h>
-#include <WiFiUdp.h>
 #include <vector>
 
 // General preferences
