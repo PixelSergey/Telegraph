@@ -98,6 +98,14 @@ void loop(){
     thing.handle();
     
     if(out_command != -1){
+        if(out_command == LOW){
+            analogWrite(LED_GRN, 0);
+            tone(SPEAKER, PITCH);
+        }else{
+            analogWrite(LED_GRN, 1023);
+            noTone(SPEAKER);
+        }
+        
         pson payload;
         payload["command"] = out_command;
         payload["millis"] = millis();
