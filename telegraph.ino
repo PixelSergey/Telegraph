@@ -51,7 +51,7 @@ void output(){
             pson payload;
             payload["command"] = button;
             payload["millis"] = millis();
-            Serial.println(button);
+            //Serial.println(button);
             thing.call_device(recvname, "command", payload);
         }
     }
@@ -66,11 +66,11 @@ void input(){
             if(in_command.front() == LOW){
                 analogWrite(LED_GRN, 0);
                 tone(SPEAKER, PITCH);
-                Serial.println("Activated");
+                //Serial.println("Activated");
             }else{
                 analogWrite(LED_GRN, 1023);
                 noTone(SPEAKER);
-                Serial.println("De-activated");
+                //Serial.println("De-activated");
             }
             in_command.erase(in_command.begin());
             in_millis.erase(in_millis.begin());
@@ -79,7 +79,7 @@ void input(){
 }
 
 void setup(){
-    Serial.begin(9600);
+    //Serial.begin(9600);
     pinMode(BUTTON, INPUT_PULLUP);
     pinMode(SPEAKER, OUTPUT);
     pinMode(LED_RED, OUTPUT);
@@ -105,14 +105,14 @@ void setup(){
     };
     thing["timesync"] << [](pson& in){
         dt = millis() - (unsigned long) in["millis"];
-        Serial.printf("Calculated dt = %d", dt);
+        //Serial.printf("Calculated dt = %d", dt);
         pson data;
         data["dt"] = -dt;
         thing.call_device(recvname, "timeresponse", data);
     };
     thing["timeresponse"] << [](pson& in){
         dt = (long) in["dt"];
-        Serial.printf("Received dt = %d", dt);
+        //Serial.printf("Received dt = %d", dt);
     };
 
     // Attempt to call the other NodeMCU right off the bat.
