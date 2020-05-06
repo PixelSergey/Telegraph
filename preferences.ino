@@ -18,6 +18,12 @@
  */
 
 #include <ThingerESP8266.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+// WiFiManager library from https://github.com/tzapu/WiFiManager
+// Installed from Arduino library manager
+#include <WiFiManager.h>
+
 #include <vector>
 
 // General preferences
@@ -28,10 +34,6 @@
 #define LED_RED D6
 #define LED_GRN D7
 #define LED_BLU D2
-
-// NodeMCU preferences
-#define WIFI_SSID "WiFi SSID"
-#define WIFI_PASSWORD "WiFi Password"
 
 // Thinger.io preferences
 #define USERNAME "Username"

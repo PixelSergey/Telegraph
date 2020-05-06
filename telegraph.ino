@@ -64,11 +64,11 @@ void input(){
         if(millis() > in_millis.front() + dt + 1000){
             // The button emits a LOW voltage when pressed due to the INPUT_PULLUP mode
             if(in_command.front() == LOW){
-                analogWrite(LED_GRN, 0);
+                analogWrite(LED_BLU, 0);
                 tone(SPEAKER, PITCH);
                 //Serial.println("Activated");
             }else{
-                analogWrite(LED_GRN, 1023);
+                analogWrite(LED_BLU, 1023);
                 noTone(SPEAKER);
                 //Serial.println("De-activated");
             }
@@ -87,15 +87,22 @@ void setup(){
     pinMode(LED_BLU, OUTPUT);
     // Due to the RGB led having a common anode, analog 0 turns
     // an LED fully on and analog 1023 turns it fully off
-    analogWrite(LED_RED, 1023);
+    analogWrite(LED_RED, 0);
     analogWrite(LED_GRN, 1023);
     analogWrite(LED_BLU, 1023);
-    
+
+    // The WiFiManager class is rather heavy. This creates a scope for the variable,
+    // which is destroyed when it properly sets up the WiFi connection
+    {
+        WiFiManager wifiManager;
+        wifiManager.autoConnect("Telegraph");
+        thing.add_wifi(WiFi.SSID().c_str(), WiFi.psk().c_str());
+    }
+
     // The most cursed and hacky line of code you will ever see
     // Converts NodeMCU1 <-> NodeMCU0 to find out the recipient's name
+    // If you can figure out how this works, good job! Have a biscuit.
     sprintf(recvname, "NodeMCU%d", !((int)DEVICE_ID[7]-48));
-    
-    thing.add_wifi(WIFI_SSID, WIFI_PASSWORD);
     
     thing["command"] << [](pson& in){
         in_command.push_back((int) in["command"]);
@@ -121,6 +128,7 @@ void setup(){
     pson data;
     data["millis"] = millis();
     thing.call_device(recvname, "timesync", data);
+    analogWrite(LED_RED, 1023);
 }
 
 void loop(){

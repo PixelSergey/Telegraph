@@ -24,9 +24,24 @@ standard breadboard size. See [this article](https://frightanic.com/iot/comparis
 1. Build the circuit as shown in the diagrams below
 1. Install the [Arduino IDE](https://www.arduino.cc/en/main/software)
 1. Install the [NodeMCU Add-On](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
-1. Install the [Thinger.io library](https://docs.thinger.io/devices/arduino)
-1. Modify the preferences under the `preferences.ino` file to include your WiFi details and Thinger credentials
-1. Connect the NodeMCU to your computer via USB and upload the code
+1. Install the [Thinger.io library](https://docs.thinger.io/devices/arduino) from the Arduino Library Manager
+1. Install the [WiFiManager library](https://github.com/tzapu/WiFiManager) by TZAPU from the Arduino Library Manager
+1. Set up two Thinger.io devices, called NodeMCU0 and NodeMCU1
+1. Modify the preferences under the `preferences.ino` file to include your Thinger credentials
+1. Connect the NodeMCUs to your computer via USB and upload the code
+
+## Usage
+
+- The first time you start the Telegraph, it will go into setup mode and shine a red light
+  - This will make it into a WiFi beacon
+  - Connect to the network named `Telegraph` with your phone or other device
+  - Fill in your WiFi SSID and password into the login webpage
+  - After you finish, Telegraph should connect to the provided network and all lights should turn off
+  - If the network credentials were incorrect or the device fails to connect, it will simply re-enter setup mode
+- Perform the setup procedure and turn on both Telegraphs
+- Press the button on one and it will send the signal in real time to the other one
+- Outgoing signals flash the green LED, and incoming signals flash the blue LED on your device
+  - Both signals beep the speaker at the same pitch
 
 ## Circuit
 
