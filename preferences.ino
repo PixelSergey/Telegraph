@@ -30,10 +30,11 @@
 #define PITCH 600
 
 #define BUTTON D1
-#define SPEAKER D5
-#define LED_RED D6
-#define LED_GRN D7
-#define LED_BLU D2
+#define SWITCH D2
+#define SPEAKER D3
+#define LED_RED D5
+#define LED_GRN D6
+#define LED_BLU D7
 
 // Thinger.io preferences
 #define USERNAME "Username"

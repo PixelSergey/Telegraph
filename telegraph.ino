@@ -32,6 +32,13 @@ void output(){
     static int current_button = -1;
     static unsigned long last_millis = millis();
     int button = digitalRead(BUTTON);
+    int state = digitalRead(SWITCH);
+
+    if(state == HIGH){  // If sending
+        analogWrite(LED_RED, 1023);
+    }else{
+        analogWrite(LED_RED, 820);
+    }
     
     if(button != last_button){
         last_millis = millis();
@@ -47,12 +54,13 @@ void output(){
                 analogWrite(LED_GRN, 1023);
                 noTone(SPEAKER);
             }
-            
-            pson payload;
-            payload["command"] = button;
-            payload["millis"] = millis();
-            //Serial.println(button);
-            thing.call_device(recvname, "command", payload);
+            if(state == HIGH){
+                pson payload;
+                payload["command"] = button;
+                payload["millis"] = millis();
+                //Serial.println(button);
+                thing.call_device(recvname, "command", payload);
+            }
         }
     }
     
@@ -81,6 +89,7 @@ void input(){
 void setup(){
     //Serial.begin(9600);
     pinMode(BUTTON, INPUT_PULLUP);
+    pinMode(SWITCH, INPUT_PULLUP);
     pinMode(SPEAKER, OUTPUT);
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_GRN, OUTPUT);

@@ -40,12 +40,15 @@ standard breadboard size. See [this article](https://frightanic.com/iot/comparis
   - If the network credentials were incorrect or the device fails to connect, it will simply re-enter setup mode
 - Perform the setup procedure and turn on both Telegraphs
 - Press the button on one and it will send the signal in real time to the other one
+  - Flicking the "mute" switch will shine a dim red light and no signals will be sent
+  - You will still be able to practice CW on your own
+  - Note that this does not save any power, as the WiFi connection is not turned off due to incoming connections
 - Outgoing signals flash the green LED, and incoming signals flash the blue LED on your device
   - Both signals beep the speaker at the same pitch
 
 ## Circuit
 
-The circuit contains a morse key (which can be any button), a speaker, and an RGB LED light.
+The circuit contains a morse key (which can be any button), a mute switch, a speaker, and an RGB LED light.
 These are hooked up using resistors and capacitors. A breadboard also helps a lot. The circuit is as follows:
 
 ![Breadboard diagram](meta/Telegraph_bb.png) ![Circuit diagram](meta/Telegraph_schem.png)
